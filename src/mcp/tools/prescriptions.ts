@@ -2,7 +2,10 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { NhsbsaClient } from "../../infrastructure/clients/nhsbsa.js";
 import { searchPrescriptions } from "../../application/use-cases/searchPrescriptions.js";
+import { getCostAnalysis } from "../../application/use-cases/getCostAnalysis.js";
 import { formatPrescriptionResults } from "../../application/formatters/prescriptionFormatter.js";
+import { formatCostAnalysisResults } from "../../application/formatters/organisationFormatter.js";
+import { withErrorHandling } from "./errorHandler.js";
 
 const EPD_RESOURCE_ID = "EPD_202404";
 
@@ -51,7 +54,7 @@ export function registerPrescriptionTools(server: McpServer): void {
           .describe("Maximum number of records to return (default 20, max 100)"),
       },
     },
-    async ({ bnf_code, drug_name, practice_code, year_month, resource_id, limit }) => {
+    withErrorHandling("prescriptions_search", async ({ bnf_code, drug_name, practice_code, year_month, resource_id, limit }) => {
       const targetResource = resource_id ?? EPD_RESOURCE_ID;
 
       const result = await searchPrescriptions(
@@ -64,6 +67,53 @@ export function registerPrescriptionTools(server: McpServer): void {
         return { content: [{ type: "text", text: result.error }], isError: true };
       }
       return { content: [{ type: "text", text: formatPrescriptionResults(result.data) }] };
+    }),
+  );
+
+  server.registerTool(
+    "prescriptions_cost_analysis",
+    {
+      title: "Prescription Cost Analysis",
+      description:
+        "Get prescription cost statistics from the national Prescription Cost Analysis (PCA) dataset. " +
+        "Shows aggregate costs and volumes at the national level (not by practice). " +
+        "Use prescriptions_search for practice-level data instead.",
+      inputSchema: {
+        bnf_code: z
+          .string()
+          .optional()
+          .describe("BNF code to filter by (e.g., '0407010H0' for Paracetamol)"),
+        bnf_name: z
+          .string()
+          .optional()
+          .describe("Free-text search for drug or chemical substance name"),
+        year_month: z
+          .string()
+          .optional()
+          .describe("Year and month in YYYYMM format (e.g., '202401')"),
+        resource_id: z
+          .string()
+          .optional()
+          .describe(
+            "Specific PCA resource ID. If omitted, the server will auto-discover the latest PCA resource.",
+          ),
+        limit: z
+          .number()
+          .optional()
+          .describe("Maximum number of records to return (default 20, max 100)"),
+      },
     },
+    withErrorHandling("prescriptions_cost_analysis", async ({ bnf_code, bnf_name, year_month, resource_id, limit }) => {
+      const result = await getCostAnalysis(
+        client,
+        { bnfCode: bnf_code, bnfName: bnf_name, yearMonth: year_month, limit },
+        resource_id,
+      );
+
+      if (!result.success) {
+        return { content: [{ type: "text", text: result.error }], isError: true };
+      }
+      return { content: [{ type: "text", text: formatCostAnalysisResults(result.data) }] };
+    }),
   );
 }

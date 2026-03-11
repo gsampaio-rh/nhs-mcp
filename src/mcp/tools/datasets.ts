@@ -4,6 +4,7 @@ import { NhsbsaClient } from "../../infrastructure/clients/nhsbsa.js";
 import { listDatasets, getDatasetMetadata } from "../../application/use-cases/listDatasets.js";
 import { queryDataset } from "../../application/use-cases/queryDataset.js";
 import { formatDatasetList, formatDatasetMetadata, formatQueryResult } from "../../application/formatters/datasetFormatter.js";
+import { withErrorHandling } from "./errorHandler.js";
 
 export function registerDatasetTools(server: McpServer): void {
   const client = new NhsbsaClient();
@@ -23,13 +24,13 @@ export function registerDatasetTools(server: McpServer): void {
           .describe("Optional text to filter datasets by title or description (e.g., 'prescribing', 'dental')"),
       },
     },
-    async ({ search_query }) => {
+    withErrorHandling("datasets_list", async ({ search_query }) => {
       const result = await listDatasets(client, search_query);
       if (!result.success) {
         return { content: [{ type: "text", text: result.error }], isError: true };
       }
       return { content: [{ type: "text", text: formatDatasetList(result.data) }] };
-    },
+    }),
   );
 
   server.registerTool(
@@ -46,13 +47,13 @@ export function registerDatasetTools(server: McpServer): void {
           .describe("The dataset name or ID (e.g., 'english-prescribing-data-epd')"),
       },
     },
-    async ({ dataset_id }) => {
+    withErrorHandling("datasets_metadata", async ({ dataset_id }) => {
       const result = await getDatasetMetadata(client, dataset_id);
       if (!result.success) {
         return { content: [{ type: "text", text: result.error }], isError: true };
       }
       return { content: [{ type: "text", text: formatDatasetMetadata(result.data) }] };
-    },
+    }),
   );
 
   server.registerTool(
@@ -81,12 +82,12 @@ export function registerDatasetTools(server: McpServer): void {
           .describe("Number of records to skip for pagination (default 0)"),
       },
     },
-    async ({ resource_id, filters, limit, offset }) => {
+    withErrorHandling("datasets_query", async ({ resource_id, filters, limit, offset }) => {
       const result = await queryDataset(client, resource_id, { filters, limit, offset });
       if (!result.success) {
         return { content: [{ type: "text", text: result.error }], isError: true };
       }
       return { content: [{ type: "text", text: formatQueryResult(result.data) }] };
-    },
+    }),
   );
 }

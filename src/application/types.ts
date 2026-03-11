@@ -42,3 +42,57 @@ export interface QueryResult<T> {
   limit: number;
   offset: number;
 }
+
+export interface OrganisationSummary {
+  orgId: string;
+  name: string;
+  status: string;
+  postCode: string;
+  lastChangeDate: string;
+  primaryRoleId: string;
+  primaryRoleDescription: string;
+}
+
+export interface OrganisationDetail {
+  orgId: string;
+  name: string;
+  status: string;
+  lastChangeDate: string;
+  recordClass: string;
+  address: {
+    line1?: string;
+    line2?: string;
+    line3?: string;
+    town?: string;
+    county?: string;
+    postCode?: string;
+    country?: string;
+  } | null;
+  roles: Array<{
+    id: string;
+    primaryRole: boolean;
+    status: string;
+    startDate?: string;
+    endDate?: string;
+  }>;
+  relationships: Array<{
+    id: string;
+    status: string;
+    targetOrgId: string;
+    targetPrimaryRoleId: string;
+  }>;
+  successors: Array<{
+    type: string;
+    targetOrgId: string;
+  }>;
+}
+
+export interface CostAnalysisRecord {
+  bnfCode: string;
+  bnfDescription: string;
+  items: number;
+  quantity: number;
+  netIngredientCost: number;
+  actualCost: number;
+  yearMonth: string;
+}

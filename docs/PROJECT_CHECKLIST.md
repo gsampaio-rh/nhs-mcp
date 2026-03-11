@@ -67,19 +67,19 @@
 
 **Goal**: Organisation lookup and improved prescriptions tools.
 
-- [ ] Implement ODS ORD API client (`src/infrastructure/clients/ods.ts`)
-- [ ] Implement `searchOrganisations` use case
-- [ ] Implement `getOrganisation` use case
-- [ ] Implement organisation formatter
-- [ ] Register `organisations/search` tool
-- [ ] Register `organisations/get` tool
-- [ ] Implement `getCostAnalysis` use case
-- [ ] Register `prescriptions/cost_analysis` tool
-- [ ] Implement MCP Resources (`nhs://datasets`, `nhs://organisation-roles`)
-- [ ] Add caching for dataset catalogue and organisation roles
-- [ ] Harden error handling across all tools
-- [ ] Unit tests for ODS client and new use cases
-- [ ] Integration tests for tool invocations
+- [x] Implement ODS ORD API client (`src/infrastructure/clients/ods.ts`)
+- [x] Implement `searchOrganisations` use case
+- [x] Implement `getOrganisation` use case
+- [x] Implement organisation formatter
+- [x] Register `organisations/search` tool
+- [x] Register `organisations/get` tool
+- [x] Implement `getCostAnalysis` use case
+- [x] Register `prescriptions/cost_analysis` tool
+- [x] Implement MCP Resources (`nhs://datasets`, `nhs://organisation-roles`)
+- [x] Add caching for dataset catalogue and organisation roles
+- [x] Harden error handling across all tools
+- [x] Unit tests for ODS client and new use cases
+- [x] Integration tests for tool invocations
 
 ---
 
