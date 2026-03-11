@@ -1,4 +1,5 @@
-import type { OrganisationSummary, OrganisationDetail, CostAnalysisRecord, QueryResult } from "../types.js";
+import type { OrganisationSummary, OrganisationDetail, CostAnalysisRecord, QueryResult, SpendingTrendResult } from "../types.js";
+import type { OrganisationRelationship } from "../use-cases/getOrganisationRelationships.js";
 
 export function formatOrganisationSearchResults(organisations: OrganisationSummary[]): string {
   if (organisations.length === 0) {
@@ -90,6 +91,58 @@ export function formatCostAnalysisResults(result: QueryResult<CostAnalysisRecord
   for (const r of result.records) {
     lines.push(
       `| ${r.bnfCode} | ${r.bnfDescription} | ${r.items} | ${r.quantity} | ${formatCurrency(r.netIngredientCost)} | ${formatCurrency(r.actualCost)} |`,
+    );
+  }
+
+  return lines.join("\n");
+}
+
+export function formatSpendingTrends(result: SpendingTrendResult): string {
+  const header = result.orgName
+    ? `# Spending Trends for ${result.bnfCode} — ${result.orgName}\n`
+    : `# Spending Trends for ${result.bnfCode}\n`;
+
+  if (result.data.length === 0) {
+    return header + "No spending data available.";
+  }
+
+  const lines = [
+    header,
+    `${result.data.length} monthly data point(s):\n`,
+    "| Date | Items | Quantity | Actual Cost |",
+    "|---|---|---|---|",
+  ];
+
+  for (const point of result.data) {
+    lines.push(`| ${point.date} | ${point.items} | ${point.quantity} | ${formatCurrency(point.actualCost)} |`);
+  }
+
+  const totalCost = result.data.reduce((sum, p) => sum + p.actualCost, 0);
+  const totalItems = result.data.reduce((sum, p) => sum + p.items, 0);
+  lines.push(`\n**Totals**: ${totalItems} items, ${formatCurrency(totalCost)} total cost`);
+
+  return lines.join("\n");
+}
+
+export function formatOrganisationRelationships(
+  orgId: string,
+  orgName: string,
+  relationships: OrganisationRelationship[],
+): string {
+  if (relationships.length === 0) {
+    return `No relationships found for ${orgName} (${orgId}).`;
+  }
+
+  const lines = [
+    `# Relationships for ${orgName} (\`${orgId}\`)\n`,
+    `${relationships.length} relationship(s):\n`,
+    "| Rel ID | Target Org | Target Role | Status | Start | End |",
+    "|---|---|---|---|---|---|",
+  ];
+
+  for (const rel of relationships) {
+    lines.push(
+      `| ${rel.relationshipId} | ${rel.targetOrgId} | ${rel.targetPrimaryRoleId} | ${rel.status} | ${rel.startDate ?? "N/A"} | ${rel.endDate ?? "—"} |`,
     );
   }
 

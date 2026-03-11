@@ -3,9 +3,11 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { OdsClient } from "../../infrastructure/clients/ods.js";
 import { searchOrganisations } from "../../application/use-cases/searchOrganisations.js";
 import { getOrganisation } from "../../application/use-cases/getOrganisation.js";
+import { getOrganisationRelationships } from "../../application/use-cases/getOrganisationRelationships.js";
 import {
   formatOrganisationSearchResults,
   formatOrganisationDetail,
+  formatOrganisationRelationships,
 } from "../../application/formatters/organisationFormatter.js";
 import { withErrorHandling } from "./errorHandler.js";
 
@@ -90,6 +92,34 @@ export function registerOrganisationTools(server: McpServer): void {
         return { content: [{ type: "text", text: result.error }], isError: true };
       }
       return { content: [{ type: "text", text: formatOrganisationDetail(result.data) }] };
+    }),
+  );
+
+  server.registerTool(
+    "organisations_relationships",
+    {
+      title: "Get Organisation Relationships",
+      description:
+        "Get the relationships for a specific NHS organisation (e.g., which ICB commissions a GP practice, " +
+        "which region a trust belongs to). Returns relationship types, target organisations, and status.",
+      inputSchema: {
+        ods_code: z
+          .string()
+          .describe("The ODS code of the organisation (e.g., 'RR8', 'A81001')"),
+      },
+    },
+    withErrorHandling("organisations_relationships", async ({ ods_code }) => {
+      const result = await getOrganisationRelationships(client, ods_code);
+
+      if (!result.success) {
+        return { content: [{ type: "text", text: result.error }], isError: true };
+      }
+      return {
+        content: [{
+          type: "text",
+          text: formatOrganisationRelationships(result.data.orgId, result.data.orgName, result.data.relationships),
+        }],
+      };
     }),
   );
 }

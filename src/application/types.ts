@@ -96,3 +96,16 @@ export interface CostAnalysisRecord {
   actualCost: number;
   yearMonth: string;
 }
+
+export interface SpendingTrendPoint {
+  date: string;
+  actualCost: number;
+  items: number;
+  quantity: number;
+}
+
+export interface SpendingTrendResult {
+  bnfCode: string;
+  orgName: string | null;
+  data: SpendingTrendPoint[];
+}

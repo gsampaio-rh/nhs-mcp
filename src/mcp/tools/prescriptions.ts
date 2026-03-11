@@ -1,16 +1,19 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { NhsbsaClient } from "../../infrastructure/clients/nhsbsa.js";
+import { OpenPrescribingClient } from "../../infrastructure/clients/openPrescribing.js";
 import { searchPrescriptions } from "../../application/use-cases/searchPrescriptions.js";
 import { getCostAnalysis } from "../../application/use-cases/getCostAnalysis.js";
+import { getSpendingTrends } from "../../application/use-cases/getSpendingTrends.js";
 import { formatPrescriptionResults } from "../../application/formatters/prescriptionFormatter.js";
-import { formatCostAnalysisResults } from "../../application/formatters/organisationFormatter.js";
+import { formatCostAnalysisResults, formatSpendingTrends } from "../../application/formatters/organisationFormatter.js";
 import { withErrorHandling } from "./errorHandler.js";
 
 const EPD_RESOURCE_ID = "EPD_202404";
 
 export function registerPrescriptionTools(server: McpServer): void {
-  const client = new NhsbsaClient();
+  const nhsbsaClient = new NhsbsaClient();
+  const openPrescribingClient = new OpenPrescribingClient();
 
   server.registerTool(
     "prescriptions_search",
@@ -58,7 +61,7 @@ export function registerPrescriptionTools(server: McpServer): void {
       const targetResource = resource_id ?? EPD_RESOURCE_ID;
 
       const result = await searchPrescriptions(
-        client,
+        nhsbsaClient,
         { bnfCode: bnf_code, drugName: drug_name, practiceCode: practice_code, yearMonth: year_month, limit },
         targetResource,
       );
@@ -105,7 +108,7 @@ export function registerPrescriptionTools(server: McpServer): void {
     },
     withErrorHandling("prescriptions_cost_analysis", async ({ bnf_code, bnf_name, year_month, resource_id, limit }) => {
       const result = await getCostAnalysis(
-        client,
+        nhsbsaClient,
         { bnfCode: bnf_code, bnfName: bnf_name, yearMonth: year_month, limit },
         resource_id,
       );
@@ -114,6 +117,46 @@ export function registerPrescriptionTools(server: McpServer): void {
         return { content: [{ type: "text", text: result.error }], isError: true };
       }
       return { content: [{ type: "text", text: formatCostAnalysisResults(result.data) }] };
+    }),
+  );
+
+  server.registerTool(
+    "prescriptions_spending_trends",
+    {
+      title: "Prescribing Spending Trends",
+      description:
+        "Analyse prescribing spending trends over time for a drug or BNF category. " +
+        "Data sourced from OpenPrescribing (last 5 years of monthly data). " +
+        "Returns monthly items, quantities, and costs. " +
+        "Can be filtered by organisation (Sub-ICB Location or practice).",
+      inputSchema: {
+        bnf_code: z
+          .string()
+          .describe(
+            "BNF code to analyse (e.g., '0212' for lipid-regulating drugs, " +
+            "'0407010H0' for Paracetamol). Supports section, paragraph, chemical, and presentation codes.",
+          ),
+        org_type: z
+          .enum(["sicbl", "practice"])
+          .optional()
+          .describe("Organisation type to group by: 'sicbl' for Sub-ICB Locations or 'practice' for GP practices"),
+        org: z
+          .string()
+          .optional()
+          .describe("Specific organisation code to filter by (e.g., 'QWO' for West Yorkshire ICB, 'A81001' for a practice)"),
+      },
+    },
+    withErrorHandling("prescriptions_spending_trends", async ({ bnf_code, org_type, org }) => {
+      const result = await getSpendingTrends(openPrescribingClient, {
+        bnfCode: bnf_code,
+        orgType: org_type,
+        org,
+      });
+
+      if (!result.success) {
+        return { content: [{ type: "text", text: result.error }], isError: true };
+      }
+      return { content: [{ type: "text", text: formatSpendingTrends(result.data) }] };
     }),
   );
 }

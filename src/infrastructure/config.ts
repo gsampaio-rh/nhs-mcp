@@ -7,6 +7,10 @@ export const config = {
     baseUrl: "https://directory.spineservices.nhs.uk/ORD/2-0-0",
     timeout: 10_000,
   },
+  openPrescribing: {
+    baseUrl: "https://openprescribing.net/api/1.0",
+    timeout: 30_000,
+  },
   defaults: {
     queryLimit: 20,
     maxQueryLimit: 100,

@@ -82,4 +82,61 @@ export function registerResources(server: McpServer): void {
       return { contents: [{ uri: "nhs://organisation-roles", text, mimeType: "text/plain" }] };
     },
   );
+
+  server.resource(
+    "bnf-codes",
+    "nhs://bnf-codes",
+    {
+      description:
+        "BNF (British National Formulary) code reference showing the therapeutic classification hierarchy. " +
+        "Lists common top-level BNF sections and example codes for use with prescribing tools.",
+      mimeType: "text/plain",
+    },
+    async () => {
+      const text = [
+        "# BNF Code Reference\n",
+        "The British National Formulary (BNF) organises drugs into a hierarchical classification.",
+        "Use these codes with prescriptions_search, prescriptions_cost_analysis, and prescriptions_spending_trends.\n",
+        "## Code Structure\n",
+        "- **Section** (2 digits): e.g., `02` = Cardiovascular System",
+        "- **Subsection** (4 digits): e.g., `0212` = Lipid-Regulating Drugs",
+        "- **Paragraph** (6 digits): e.g., `021200` = Lipid-Regulating Drugs",
+        "- **Chemical** (9 digits): e.g., `0212000AA` = Atorvastatin",
+        "- **Presentation** (15 digits): e.g., `0212000AAAAAAAA` = Atorvastatin 10mg tablets\n",
+        "## Common BNF Sections\n",
+        "| Code | Section |",
+        "|---|---|",
+        "| 01 | Gastro-Intestinal System |",
+        "| 02 | Cardiovascular System |",
+        "| 03 | Respiratory System |",
+        "| 04 | Central Nervous System |",
+        "| 05 | Infections |",
+        "| 06 | Endocrine System |",
+        "| 07 | Obstetrics, Gynaecology, and Urinary-Tract Disorders |",
+        "| 08 | Malignant Disease and Immunosuppression |",
+        "| 09 | Nutrition and Blood |",
+        "| 10 | Musculoskeletal and Joint Diseases |",
+        "| 11 | Eye |",
+        "| 12 | Ear, Nose, and Oropharynx |",
+        "| 13 | Skin |",
+        "| 14 | Immunological Products and Vaccines |",
+        "| 15 | Anaesthesia |\n",
+        "## Common Drug Codes\n",
+        "| Code | Drug |",
+        "|---|---|",
+        "| 0407010H0 | Paracetamol |",
+        "| 0501013B0 | Amoxicillin |",
+        "| 0212000AA | Atorvastatin |",
+        "| 0602010V0 | Levothyroxine Sodium |",
+        "| 0206020A0 | Amlodipine |",
+        "| 0601021M0 | Metformin Hydrochloride |",
+        "| 0301011R0 | Salbutamol |",
+        "| 0403030Q0 | Sertraline Hydrochloride |",
+        "| 0304010Y0 | Cetirizine Hydrochloride |",
+        "| 0205051R0 | Ramipril |",
+      ].join("\n");
+
+      return { contents: [{ uri: "nhs://bnf-codes", text, mimeType: "text/plain" }] };
+    },
+  );
 }
